@@ -14,8 +14,10 @@ use Symfony\Component\Routing\Attribute\Route;
 final class MoviesController extends AbstractController
 {
     private $movieRepository;
-    public function __construct(MovieRepository $movieRepository){
+    private $entityManager;
+    public function __construct(MovieRepository $movieRepository, EntityManagerInterface $entityManager){
         $this->movieRepository = $movieRepository;
+        $this->entityManager = $entityManager;
     }
 
     #[Route('/movies/create', name: 'create_movie')]
@@ -29,6 +31,21 @@ final class MoviesController extends AbstractController
             $newMovie = $form->getData();
 
             $imagePath = $form->get('imagePath')->getData();
+            if ($imagePath) {
+                $newFileName = uniqid() . '.' . $imagePath->guessExtension();
+
+                try {
+                    $imagePath->move($this->getParameter('kernel.project_dist') . '/public/uploads', $newFileName);
+                } catch (FileException $e) {
+                    return new Response($e->getMessage());
+                };
+                $newMovie->setImagePath('/uploads', $newFileName);
+            }
+
+            $this->entityManager->persist($newMovie);
+            $this->entityManager->flush();
+
+            return $this->redirectToRoute('movies');
         }
 
         return $this->render('movies/create.html.twig', ['form' => $form->createView(), 'movie'=> $movie]);
