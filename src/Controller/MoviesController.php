@@ -35,11 +35,11 @@ final class MoviesController extends AbstractController
                 $newFileName = uniqid() . '.' . $imagePath->guessExtension();
 
                 try {
-                    $imagePath->move($this->getParameter('kernel.project_dist') . '/public/uploads', $newFileName);
+                    $imagePath->move($this->getParameter('kernel.project_dir') . '/public/uploads', $newFileName);
                 } catch (FileException $e) {
                     return new Response($e->getMessage());
                 };
-                $newMovie->setImagePath('/uploads', $newFileName);
+                $newMovie->setImagePath('/uploads/' . $newFileName);
             }
 
             $this->entityManager->persist($newMovie);
